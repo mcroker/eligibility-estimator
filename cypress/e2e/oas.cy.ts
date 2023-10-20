@@ -35,7 +35,6 @@ beforeEach(() => {
  */
 describe('OAS Benefit Card Results', () => {
   testData.forEach((item) => {
-    if(item.testId == "CASE-B-O16"){
     it(`Test  ${item.testId}`, () => {
       
       //Fill Form
@@ -80,7 +79,6 @@ describe('OAS Benefit Card Results', () => {
         });
 
     })
-}
   })
 })
 
