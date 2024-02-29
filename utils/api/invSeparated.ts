@@ -1,14 +1,12 @@
 import { consoleDev } from '../web/helpers/utils'
 import { getTranslations, Translations } from '../../i18n/api'
-import { AlwsBenefit } from './benefits/alwsBenefit'
-import { AlwBenefit } from './benefits/alwBenefit'
-import { EntitlementFormula } from './benefits/entitlementFormula'
-import { GisBenefit } from './benefits/gisBenefit'
-import { OasBenefit } from './benefits/oasBenefit'
-import { BaseBenefit } from './benefits/_base'
+import { AlwsBenefitCard } from './benefits/alwsBenefit'
+import { AlwBenefitCard } from './benefits/alwBenefit'
+import { GisBenefitCard } from './benefits/gisBenefit'
+import { OasBenefitCard } from './benefits/oasBenefit'
+import { BaseBenefitCard } from './benefits/_base'
 import {
   EntitlementResultType,
-  LegalStatus,
   MaritalStatus,
   PartnerBenefitStatus,
   ResultKey,
@@ -16,10 +14,9 @@ import {
 } from './definitions/enums'
 import {
   BenefitResultsObjectWithPartner,
-  EntitlementResultGeneric,
-  ProcessedInput,
   RequestInput,
   ProcessedInputWithPartner,
+  ProcessedInput,
 } from './definitions/types'
 import {
   MaritalStatusHelper,
@@ -29,6 +26,11 @@ import {
   IncomeHelper,
 } from './helpers/fieldClasses'
 import legalValues from './scrapers/output'
+import {
+  ClientAndPartner,
+  EntitlementFormula,
+  EntitlementResultGeneric
+} from '@croker/oas-eligibility-entitlement-lib'
 
 //
 // This File is just to unload this big chunk of code
@@ -40,13 +42,13 @@ import legalValues from './scrapers/output'
 //
 
 export function InvSeparatedAllCases(
-  clientOas: OasBenefit,
-  clientGis: GisBenefit,
-  clientAlw: AlwBenefit,
-  clientAlws: AlwsBenefit,
-  partnerOas: OasBenefit,
-  partnerGis: GisBenefit,
-  partnerAlw: AlwBenefit,
+  clientOas: OasBenefitCard,
+  clientGis: GisBenefitCard,
+  clientAlw: AlwBenefitCard,
+  clientAlws: AlwsBenefitCard,
+  partnerOas: OasBenefitCard,
+  partnerGis: GisBenefitCard,
+  partnerAlw: AlwBenefitCard,
   initialPartnerBenefitStatus: PartnerBenefitStatus,
   future: Boolean,
   input: ProcessedInputWithPartner,
@@ -72,8 +74,8 @@ export function InvSeparatedAllCases(
       // applicant gis using table1
       const applicantGisResultT1 = new EntitlementFormula(
         input.client.income.client,
-        maritalStatus,
-        input.client.partnerBenefitStatus,
+        maritalStatus.value,
+        input.partner.partnerBenefitStatus.value,
         input.client.age,
         allResults.client.oas
       ).getEntitlementAmount()
@@ -86,8 +88,8 @@ export function InvSeparatedAllCases(
       // partner gis using table1
       const partnerGisResultT1 = new EntitlementFormula(
         input.client.income.partner,
-        maritalStatus,
-        input.partner.partnerBenefitStatus,
+        maritalStatus.value,
+        input.partner.partnerBenefitStatus.value,
         input.partner.age,
         allResults.partner.oas
       ).getEntitlementAmount()
@@ -107,8 +109,8 @@ export function InvSeparatedAllCases(
       // benefitStatus OAS_GIS means both are receiving OAS/GIS -> RT2
       const applicantGisT2_T3 = new EntitlementFormula(
         input.client.income.relevant,
-        maritalStatus,
-        benefitStatus,
+        maritalStatus.value,
+        benefitStatus.value,
         input.client.age,
         allResults.client.oas
       ).getEntitlementAmount()
@@ -118,8 +120,8 @@ export function InvSeparatedAllCases(
       // partner gis using table2
       const partnerGisResultT2 = new EntitlementFormula(
         input.client.income.relevant,
-        maritalStatus,
-        benefitStatus,
+        maritalStatus.value,
+        benefitStatus.value,
         input.partner.age,
         allResults.partner.oas
       ).getEntitlementAmount()
@@ -186,7 +188,7 @@ export function InvSeparatedAllCases(
           useT1versusT2_T3
         )
 
-        clientGis = new GisBenefit(
+        clientGis = new GisBenefitCard(
           clientSingleInput,
           translations,
           allResults.client.oas,
@@ -202,7 +204,7 @@ export function InvSeparatedAllCases(
 
         const partnerSingleInput = getSinglePartnerInput(input, rawInput)
 
-        partnerGis = new GisBenefit(
+        partnerGis = new GisBenefitCard(
           partnerSingleInput,
           translations,
           allResults.partner.oas,
@@ -225,16 +227,16 @@ export function InvSeparatedAllCases(
       //calculate gis entitlement for applicant use table4
       const applicantGisResultT4 = new EntitlementFormula(
         input.client.income.relevant,
-        maritalStatus,
-        input.client.partnerBenefitStatus,
+        maritalStatus.value,
+        input.client.partnerBenefitStatus.value,
         input.client.age,
         allResults.client.oas
       ).getEntitlementAmount()
 
       const partnerAlwCalcCouple = new EntitlementFormula(
         input.partner.income.relevant,
-        maritalStatus,
-        input.partner.partnerBenefitStatus,
+        maritalStatus.value,
+        input.partner.partnerBenefitStatus.value,
         input.partner.age
       ).getEntitlementAmount()
 
@@ -253,16 +255,16 @@ export function InvSeparatedAllCases(
       // applicant gis using table1
       const applicantGisResultT1 = new EntitlementFormula(
         input.client.income.client,
-        mStatus,
-        input.client.partnerBenefitStatus,
+        mStatus.value,
+        input.client.partnerBenefitStatus.value,
         input.client.age,
         allResults.client.oas
       ).getEntitlementAmount()
 
       const partnerAlwCalcSingle = new EntitlementFormula(
         input.partner.income.partner,
-        maritalStatus,
-        input.partner.partnerBenefitStatus,
+        maritalStatus.value,
+        input.partner.partnerBenefitStatus.value,
         input.partner.age,
         allResults.partner.oas
       ).getEntitlementAmount()
@@ -295,7 +297,7 @@ export function InvSeparatedAllCases(
       if (totalAmountSingle > totalAmtCouple) {
         const clientSingleInput = getSingleClientInput(input, rawInput, true)
 
-        clientGis = new GisBenefit(
+        clientGis = new GisBenefitCard(
           clientSingleInput,
           translations,
           allResults.client.oas,
@@ -339,7 +341,7 @@ export function InvSeparatedAllCases(
       }
 
       if (totalAmountSingle <= totalAmtCouple || !isApplicantGisAvailable) {
-        const clientGisCouple = new GisBenefit(
+        const clientGisCouple = new GisBenefitCard(
           input.client,
           translations,
           allResults.client.oas,
@@ -374,8 +376,8 @@ export function InvSeparatedAllCases(
       //calculate gis entitlement for applicant use table4
       const partnerGisResultT4 = new EntitlementFormula(
         input.partner.income.relevant,
-        maritalStatus,
-        input.partner.partnerBenefitStatus,
+        maritalStatus.value,
+        input.partner.partnerBenefitStatus.value,
         input.partner.age,
         allResults.partner.oas
       ).getEntitlementAmount()
@@ -383,16 +385,16 @@ export function InvSeparatedAllCases(
       //calculate alw entitlement for application
       const applicantAlwCalcCouple = new EntitlementFormula(
         input.client.income.relevant,
-        maritalStatus,
-        input.client.partnerBenefitStatus,
+        maritalStatus.value,
+        input.client.partnerBenefitStatus.value,
         input.client.age
       ).getEntitlementAmount()
 
       //calculate alw entitlement for application
       const applicantAlwCalcSingle = new EntitlementFormula(
         input.client.income.client,
-        maritalStatus,
-        input.client.partnerBenefitStatus,
+        maritalStatus.value,
+        input.client.partnerBenefitStatus.value,
         //new PartnerBenefitStatusHelper(PartnerBenefitStatus.OAS_GIS),
         input.client.age
       ).getEntitlementAmount()
@@ -417,8 +419,8 @@ export function InvSeparatedAllCases(
       // calculate partner GIS using table 1
       const partnerGisResultT1 = new EntitlementFormula(
         input.partner.income.partner,
-        new MaritalStatusHelper(MaritalStatus.SINGLE),
-        input.partner.partnerBenefitStatus,
+        MaritalStatus.SINGLE,
+        input.partner.partnerBenefitStatus.value,
         input.partner.age,
         allResults.partner.oas
       ).getEntitlementAmount()
@@ -440,7 +442,7 @@ export function InvSeparatedAllCases(
       if (totalAmountSingle > totalAmountCouple) {
         const partnerSingleInput = getSinglePartnerInput(input, rawInput)
 
-        partnerGis = new GisBenefit(
+        partnerGis = new GisBenefitCard(
           partnerSingleInput,
           translations,
           allResults.partner.oas,
@@ -479,7 +481,7 @@ export function InvSeparatedAllCases(
           // If client is eligible for ALW, need to recalculate estimate based on individual income
           if (clientAlw.eligibility.result === 'eligible') {
             if (input.client.income.client >= legalValues.alw.alwIncomeLimit) {
-              const tempClientAlw = new AlwBenefit(
+              const tempClientAlw = new AlwBenefitCard(
                 input.client,
                 translations,
                 rawInput.partnerLivingCountry,
@@ -496,7 +498,7 @@ export function InvSeparatedAllCases(
                 detail: translations.detail.alwEligibleIncomeTooHigh,
               }
             } else {
-              const tempClientAlw = new AlwBenefit(
+              const tempClientAlw = new AlwBenefitCard(
                 input.client,
                 translations,
                 rawInput.partnerLivingCountry,
@@ -580,8 +582,8 @@ export function InvSeparatedAllCases(
 
       const applicantGisResultT3 = new EntitlementFormula(
         input.client.income.relevant,
-        maritalStatus,
-        input.client.partnerBenefitStatus,
+        maritalStatus.value,
+        input.client.partnerBenefitStatus.value,
         input.client.age,
         noOAS
       ).getEntitlementAmount()
@@ -592,8 +594,8 @@ export function InvSeparatedAllCases(
       // applicant gis using table1
       const applicantGisResultT1 = new EntitlementFormula(
         input.client.income.client,
-        maritalStatus,
-        input.client.partnerBenefitStatus,
+        maritalStatus.value,
+        input.client.partnerBenefitStatus.value,
         input.client.age,
         allResults.client.oas
       ).getEntitlementAmount()
@@ -662,16 +664,16 @@ export function InvSeparatedAllCases(
 
       const partnerGisResultT3 = new EntitlementFormula(
         input.partner.income.relevant,
-        maritalStatus,
-        input.partner.partnerBenefitStatus,
+        maritalStatus.value,
+        input.partner.partnerBenefitStatus.value,
         input.partner.age,
         noOAS
       ).getEntitlementAmount()
 
       const partnerGisResultT1 = new EntitlementFormula(
         input.client.income.partner,
-        new MaritalStatusHelper(MaritalStatus.SINGLE),
-        input.partner.partnerBenefitStatus,
+        MaritalStatus.SINGLE,
+        input.partner.partnerBenefitStatus.value,
         input.partner.age,
         allResults.partner.oas
       ).getEntitlementAmount()
@@ -753,7 +755,7 @@ function setValueForAllResults(
   allResults: BenefitResultsObjectWithPartner,
   prop: string,
   benefitName: string,
-  benefit: BaseBenefit<EntitlementResultGeneric>
+  benefit: BaseBenefitCard<ClientAndPartner, EntitlementResultGeneric>
 ): void {
   allResults[prop][benefitName].eligibility = benefit.eligibility
   allResults[prop][benefitName].entitlement = benefit.entitlement

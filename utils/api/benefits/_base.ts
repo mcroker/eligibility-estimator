@@ -15,25 +15,31 @@ import {
   ProcessedInput,
 } from '../definitions/types'
 
-export abstract class BaseBenefit<T extends EntitlementResult> {
+import { BaseBenefit, ClientAndPartner } from '@croker/oas-eligibility-entitlement-lib'
+
+export abstract class BaseBenefitCard<CLIENT extends ClientAndPartner = ClientAndPartner, RESULT extends EntitlementResult = EntitlementResult> {
   private _eligibility: EligibilityResult
-  private _entitlement: T
+  private _entitlement: RESULT
   private _cardDetail: CardDetail
+
+  protected abstract client: CLIENT
+  protected abstract benefit: BaseBenefit<CLIENT,RESULT>
+
   protected constructor(
     protected input: ProcessedInput,
     protected translations: Translations,
     protected benefitKey: BenefitKey
-  ) {}
+  ) { }
 
   get eligibility(): EligibilityResult {
     if (this._eligibility === undefined)
-      this._eligibility = this.getEligibility()
+      this._eligibility = this.benefit.eligibility
     return this._eligibility
   }
 
-  get entitlement(): T {
+  get entitlement(): RESULT {
     if (this._entitlement === undefined)
-      this._entitlement = this.getEntitlement()
+      this._entitlement =  this.benefit.entitlement
     return this._entitlement
   }
 
@@ -41,15 +47,7 @@ export abstract class BaseBenefit<T extends EntitlementResult> {
     if (this._cardDetail === undefined) this._cardDetail = this.getCardDetail()
     return this._cardDetail
   }
-
-  protected getEligibility(): EligibilityResult {
-    return undefined
-  }
-
-  protected getEntitlement(): T {
-    return undefined
-  }
-
+  
   protected getCardDetail(): CardDetail {
     return {
       mainText: this.getCardText(),
@@ -64,7 +62,7 @@ export abstract class BaseBenefit<T extends EntitlementResult> {
    * This is overridden by ALW+AFS.
    */
   protected getAutoEnrollment(): boolean {
-    return this.eligibility.result === ResultKey.ELIGIBLE
+    return this.benefit.getAutoEnrollment()
   }
 
   /**

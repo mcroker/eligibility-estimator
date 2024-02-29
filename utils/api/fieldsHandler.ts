@@ -1,6 +1,6 @@
-import { AlwBenefit } from './benefits/alwBenefit'
-import { GisBenefit } from './benefits/gisBenefit'
-import { OasBenefit } from './benefits/oasBenefit'
+import { AlwBenefitCard } from './benefits/alwBenefit'
+import { GisBenefitCard } from './benefits/gisBenefit'
+import { OasBenefitCard } from './benefits/oasBenefit'
 import { getTranslations, Translations } from '../../i18n/api'
 import {
   Language,
@@ -285,9 +285,9 @@ export class FieldsHandler {
   }
 
   getPartnerBenefitStatus(
-    gisObject: GisBenefit,
-    alwObject: AlwBenefit,
-    oasObject: OasBenefit
+    gisObject: GisBenefitCard,
+    alwObject: AlwBenefitCard,
+    oasObject: OasBenefitCard
   ): PartnerBenefitStatusHelper {
     const eligibleArray = [ResultKey.ELIGIBLE, ResultKey.INCOME_DEPENDENT]
 

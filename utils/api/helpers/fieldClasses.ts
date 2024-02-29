@@ -6,7 +6,7 @@ import {
   PartnerBenefitStatus,
   ResultKey,
 } from '../definitions/enums'
-import { EligibilityResult, EntitlementResult } from '../definitions/types'
+import { EligibilityResult, EntitlementResult } from '@croker/oas-eligibility-entitlement-lib'
 import { AGREEMENT_COUNTRIES } from './countryUtils'
 
 export class FieldHelper {

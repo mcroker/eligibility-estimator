@@ -9,17 +9,21 @@ import {
 } from '../helpers/fieldClasses'
 import {
   BenefitKey,
-  EntitlementResultType,
   Language,
   LegalStatus,
   LinkIcon,
   MaritalStatus,
   PartnerBenefitStatus,
-  ResultKey,
-  ResultReason,
   SummaryState,
 } from './enums'
 import { FieldConfig, FieldKey } from './fields'
+import {
+  ClientAndPartnerInput,
+  EligibilityResult,
+  EntitlementResult,
+  EntitlementResultGeneric, 
+  EntitlementResultOas
+} from '@croker/oas-eligibility-entitlement-lib'
 
 /**
  * What the API expects to receive. This is passed to Joi for validation.
@@ -77,40 +81,59 @@ export interface ProcessedInput {
   invSeparated: boolean
 }
 
+export function requestInputToLibInput(req: RequestInput): ClientAndPartnerInput {
+  return {
+    client: {
+      age: req.age,
+      birthDate: req.clientBirthDate,
+      income: req.income,
+      incomeWork: req.incomeWork,
+      legalStatus: req.legalStatus,
+      livedOnlyInCanada: req.livedOnlyInCanada,
+      livingCountry: req.livingCountry,
+      maritalStatus: req.maritalStatus,
+      yearsInCanadaSince18: req.yearsInCanadaSince18
+    },
+    partner: {
+      age: req.partnerAge,
+      birthDate: req.partnerBirthDate,
+      income: req.partnerIncome,
+      incomeWork: req.partnerIncomeWork,
+      legalStatus: req.partnerLegalStatus,
+      livedOnlyInCanada: req.partnerLivedOnlyInCanada,
+      livingCountry: req.partnerLivingCountry,
+      yearsInCanadaSince18: req.partnerYearsInCanadaSince18
+    },
+  }
+}
+
+export function processedInputToLibInput(inp: ProcessedInput): ClientAndPartnerInput {
+  return {
+    client: {
+      age: inp.age,
+      birthDate: inp.clientBirthDate,
+      income: inp.income.client,
+      incomeWork: inp.income.clientIncomeWork,
+      legalStatus: inp.legalStatus.value,
+      livedOnlyInCanada: inp.livedOnlyInCanada,
+      livingCountry: inp.livingCountry.value,
+      maritalStatus: inp.maritalStatus.value,
+      yearsInCanadaSince18: inp.yearsInCanadaSince18
+    },
+    partner: {
+      benefitStatus: inp.partnerBenefitStatus.value,
+      income: inp.income.partner,
+      incomeWork: inp.income.partnerIncomeWork,
+    },
+  }
+}
+
 export interface ProcessedInputWithPartner {
   client: ProcessedInput
   partner: ProcessedInput
   _translations: Translations
 }
 
-export interface EligibilityResult {
-  result: ResultKey
-  reason: ResultReason
-  detail: string
-  incomeMustBeLessThan?: number // for use when income is not provided
-}
-
-export interface EntitlementResultGeneric {
-  result: number // when type is unavailable, result should be -1
-  type: EntitlementResultType
-  autoEnrollment: boolean
-}
-
-export interface EntitlementResultOas extends EntitlementResultGeneric {
-  result65To74: number
-  resultAt75: number
-  clawback: number
-  deferral: {
-    age: number
-    years: number
-    increase: number
-    deferred: boolean
-    length: any
-    residency: number
-  }
-}
-
-export type EntitlementResult = EntitlementResultGeneric | EntitlementResultOas
 
 /**
  * This is text within the cards, that will expand when clicked.

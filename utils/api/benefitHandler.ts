@@ -1,9 +1,9 @@
 import { consoleDev } from '../web/helpers/utils'
-import { AlwBenefit } from './benefits/alwBenefit'
-import { AlwsBenefit } from './benefits/alwsBenefit'
-import { GisBenefit } from './benefits/gisBenefit'
-import { OasBenefit } from './benefits/oasBenefit'
-import { BaseBenefit } from './benefits/_base'
+import { AlwBenefitCard } from './benefits/alwBenefit'
+import { AlwsBenefitCard } from './benefits/alwsBenefit'
+import { GisBenefitCard } from './benefits/gisBenefit'
+import { OasBenefitCard} from './benefits/oasBenefit'
+import { BaseBenefitCard } from './benefits/_base'
 import {
   BenefitKey,
   EntitlementResultType,
@@ -24,6 +24,7 @@ import { evaluateOASInput, OasEligibility } from './helpers/utils'
 import { InvSeparatedAllCases } from './invSeparated'
 import legalValues from './scrapers/output'
 import { SummaryHandler } from './summaryHandler'
+import { ClientAndPartner } from 'oas-eligibility-entitlement-lib'
 
 export class BenefitHandler {
   private _benefitResults: BenefitResultsObjectWithPartner
@@ -158,7 +159,7 @@ export class BenefitHandler {
       )
     }
 
-    const clientOasNoDeferral = new OasBenefit(
+    const clientOasNoDeferral = new OasBenefitCard(
       this.input.client,
       this.fields.translations,
       false,
@@ -171,7 +172,7 @@ export class BenefitHandler {
     // If the client needs help, check their partner's OAS.
     // no defer and defer options?
     if (this.input.client.partnerBenefitStatus.helpMe) {
-      const partnerOasNoDeferral = new OasBenefit(
+      const partnerOasNoDeferral = new OasBenefitCard(
         this.input.partner,
         this.fields.translations,
         true
@@ -205,7 +206,7 @@ export class BenefitHandler {
         'Modified input to calculate OAS with deferral',
         clientOasHelper.newInput
       )
-      clientOasWithDeferral = new OasBenefit(
+      clientOasWithDeferral = new OasBenefitCard(
         clientOasHelper.newInput,
         this.fields.translations,
         false,
@@ -221,7 +222,7 @@ export class BenefitHandler {
       )
     }
 
-    let clientGisNoDeferral = new GisBenefit(
+    let clientGisNoDeferral = new GisBenefitCard(
       this.input.client,
       this.fields.translations,
       clientOasNoDeferral.info,
@@ -236,7 +237,7 @@ export class BenefitHandler {
 
     let clientGisWithDeferral
     if (clientOasWithDeferral) {
-      clientGisWithDeferral = new GisBenefit(
+      clientGisWithDeferral = new GisBenefitCard(
         clientOasHelper.newInput,
         this.fields.translations,
         clientOasWithDeferral.info,
@@ -289,7 +290,7 @@ export class BenefitHandler {
     if (!this.future) {
       if (clientOasHelper.canDefer) {
         if (deferralMoreBeneficial) {
-          clientOas.cardDetail.meta = OasBenefit.buildMetadataObj(
+          clientOas.cardDetail.meta = OasBenefitCard.buildMetadataObj(
             this.input.client.age, // current age
             clientOasHelper.newInput.age, // base age - age when first eligible for OAS
             this.input.client,
@@ -300,7 +301,7 @@ export class BenefitHandler {
         } else {
           // Scenario when client age is same as eligibility age. They could choose not to receive OAS yet until later so we show the deferral table.
           if (clientOasHelper.justBecameEligible) {
-            clientOas.cardDetail.meta = OasBenefit.buildMetadataObj(
+            clientOas.cardDetail.meta = OasBenefitCard.buildMetadataObj(
               this.input.client.age,
               this.input.client.age,
               this.input.client,
@@ -309,7 +310,7 @@ export class BenefitHandler {
               this.future
             )
           } else {
-            clientOas.cardDetail.meta = OasBenefit.buildMetadataObj(
+            clientOas.cardDetail.meta = OasBenefitCard.buildMetadataObj(
               this.input.client.age, // current age
               clientOasHelper.newInput.age, // base age - age when first eligible for OAS
               this.input.client,
@@ -320,7 +321,7 @@ export class BenefitHandler {
           }
         }
       } else {
-        clientOas.cardDetail.meta = OasBenefit.buildMetadataObj(
+        clientOas.cardDetail.meta = OasBenefitCard.buildMetadataObj(
           this.input.client.age, // current age
           this.input.client.age, // base age - age when first eligible for OAS
           this.input.client,
@@ -336,7 +337,7 @@ export class BenefitHandler {
 
     // If the client needs help, check their partner's OAS.
     if (this.input.client.partnerBenefitStatus.helpMe) {
-      const partnerOas = new OasBenefit(
+      const partnerOas = new OasBenefitCard(
         this.input.partner,
         this.fields.translations,
         true
@@ -352,7 +353,7 @@ export class BenefitHandler {
 
     // If the client needs help, check their partner's GIS eligibility.
     if (this.input.client.partnerBenefitStatus.helpMe) {
-      const partnerGis = new GisBenefit(
+      const partnerGis = new GisBenefitCard(
         this.input.partner,
         this.fields.translations,
         allResults.partner.oas,
@@ -368,7 +369,7 @@ export class BenefitHandler {
     }
 
     // Moving onto ALW, again only doing eligibility.
-    const clientAlw = new AlwBenefit(
+    const clientAlw = new AlwBenefitCard(
       this.input.client,
       this.fields.translations,
       this.rawInput.partnerLivingCountry,
@@ -418,7 +419,7 @@ export class BenefitHandler {
 
     // If the client needs help, check their partner's ALW eligibility.
     if (this.input.client.partnerBenefitStatus.helpMe) {
-      const partnerAlw = new AlwBenefit(
+      const partnerAlw = new AlwBenefitCard(
         this.input.partner,
         this.fields.translations,
         this.rawInput.livingCountry,
@@ -434,14 +435,14 @@ export class BenefitHandler {
     }
 
     // Moving onto AFS, again only doing eligibility.
-    const clientAlws = new AlwsBenefit(
+    const clientAlws = new AlwsBenefitCard(
       this.input.client,
       this.fields.translations,
       this.future
     )
     allResults.client.alws.eligibility = clientAlws.eligibility
 
-    const partnerAlw = new AlwBenefit(
+    const partnerAlw = new AlwBenefitCard(
       this.input.partner,
       this.fields.translations,
       this.rawInput.livingCountry,
@@ -453,14 +454,14 @@ export class BenefitHandler {
     this.input.partner.partnerBenefitStatus.value =
       this.input.client.partnerBenefitStatus.value
 
-    const partnerOas = new OasBenefit(
+    const partnerOas = new OasBenefitCard(
       this.input.partner,
       this.fields.translations,
       true
     )
     this.setValueForAllResults(allResults, 'partner', 'oas', partnerOas)
 
-    let partnerGis = new GisBenefit(
+    let partnerGis = new GisBenefitCard(
       this.input.partner,
       this.fields.translations,
       allResults.partner.oas,
@@ -475,7 +476,7 @@ export class BenefitHandler {
       clientGis.eligibility.incomeMustBeLessThan =
         legalValues.gis.spouseAlwIncomeLimit
 
-      clientGis = new GisBenefit(
+      clientGis = new GisBenefitCard(
         this.input.client,
         this.fields.translations,
         allResults.client.oas,
@@ -532,7 +533,7 @@ export class BenefitHandler {
     allResults: BenefitResultsObjectWithPartner,
     prop: string,
     benefitName: string,
-    benefit: BaseBenefit<EntitlementResultGeneric>
+    benefit: BaseBenefitCard<ClientAndPartner,EntitlementResultGeneric>
   ): void {
     allResults[prop][benefitName].eligibility = benefit.eligibility
     allResults[prop][benefitName].entitlement = benefit.entitlement

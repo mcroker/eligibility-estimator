@@ -1,6 +1,5 @@
 import Joi from 'joi'
-import { AGREEMENT_COUNTRIES, ALL_COUNTRY_CODES } from '../helpers/countryUtils'
-import legalValues from '../scrapers/output'
+import { ALL_COUNTRY_CODES } from '../helpers/countryUtils'
 import {
   Language,
   LegalStatus,
